@@ -1,4 +1,4 @@
-# Cuda_selector
+# Auto Cuda Selector
 
 A simple tool to select the optimal CUDA device based on memory, power, or utilization.
 
@@ -7,7 +7,7 @@ A simple tool to select the optimal CUDA device based on memory, power, or utili
 ```bash
 pip install cuda-selector
 ```
-
+### Usage
 ```python
 from cuda_selector import auto_cuda
 
