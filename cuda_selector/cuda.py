@@ -1,6 +1,7 @@
 import ctypes
 import platform
 import subprocess
+import warnings
 
 def is_mps_available():
     if platform.system() != 'Darwin':
@@ -16,9 +17,11 @@ def is_mps_available():
 def auto_cuda(criteria='memory'):
     if platform.system() == 'Darwin':
         if is_mps_available():
-            return "\033[93mMPS device detected and selected.\033[0m mps"
+            warnings.warn("MPS device detected and selected.")
+            return "mps"
         else:
-            return "\033[93mNo MPS device available on macOS. Using CPU instead.\033[0m"
+            warnings.warn("No MPS device available on macOS. Using CPU instead.")
+            return "cpu"
 
     try:
         result = subprocess.run(
@@ -51,7 +54,8 @@ def auto_cuda(criteria='memory'):
             })
 
         if not devices:
-            return "\033[93mNo CUDA devices detected. Using CPU instead.\033[0m"
+            warnings.warn("No CUDA devices detected. Using CPU instead.")
+            return "cpu"
 
         if criteria == 'memory':
             optimal_device = max(devices, key=lambda x: x['memory_free'])
@@ -65,4 +69,5 @@ def auto_cuda(criteria='memory'):
         return f'cuda:{optimal_device["index"]}'
 
     except FileNotFoundError:
-        return "\033[93m'nvidia-smi' not found. No CUDA devices detected. Using CPU instead.\033[0m"
+        warnings.warn("'nvidia-smi' not found. No CUDA devices detected. Using CPU instead.")
+        return "cpu"
