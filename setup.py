@@ -1,12 +1,18 @@
 from setuptools import setup, find_packages
+from pathlib import Path
+
+this_directory = Path(__file__).parent
+long_description = (this_directory / "README.md").read_text()
 
 setup(
     name='cuda-selector',
-    version='0.1.0',
+    version='0.1.4',
     description='A simple tool to select the optimal CUDA device based on memory, power, or utilization.',
+    long_description=long_description,
+    long_description_content_type='text/markdown',
     author='Samer Makni',
     author_email='samermakni@outlook.com',
-    url='https://github.com/samermakni/cuda-selector',  # Replace with your repo URL
+    url='https://github.com/samermakni/cuda-selector', 
     packages=find_packages(),
     install_requires=[],
     classifiers=[
