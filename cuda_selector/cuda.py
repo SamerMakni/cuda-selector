@@ -4,6 +4,9 @@ import subprocess
 import warnings
 
 def is_mps_available():
+    """
+    Checks if the Multi-Process Service (MPS) is available on the system.
+    """
     if platform.system() != 'Darwin':
         return False 
 
@@ -16,66 +19,41 @@ def is_mps_available():
 
 def auto_cuda(criteria='memory', n=1, fallback=True, exclude=None, thresholds=None, sort_fn=None):
     """
-    Selects the optimal CUDA device based on specified criteria (memory, power, utilization, temperature) 
-    or a custom ranking function, with options to exclude certain devices, apply thresholds, and choose 
+    Selects the optefzfezfezfimal CUDA device based on specified criteria (memory, power, utilization, temperature)
+    or a custom ranking function, with options to exclude certain devices, apply thresholds, and choose
     fallback behaviors for macOS devices.
 
-    Parameters:
-    -----------
-    criteria : str, optional, default='memory'
-        The primary selection criterion for the optimal device. 
-        Options: 
-            - 'memory': selects the device with the most free memory.
-            - 'power': selects the device with the lowest power draw.
-            - 'utilization': selects the device with the lowest GPU utilization.
-            - 'temperature': selects the device with the lowest temperature.
+    :param criteria: The primary selection criterion for the optimal device.
+                      Options: 'memory', 'power', 'utilization', or 'temperature'.
+                      Default is 'memory'.
+    :type criteria: str, optional
+    :param n: The number of devices to return. Default is 1.
+    :type n: int, optional
+    :param fallback: Whether to fall back to the CPU if no suitable CUDA device is found.
+                     Default is True.
+    :type fallback: bool, optional
+    :param exclude: A list or set of GPU indices to exclude from selection.
+    :type exclude: list or set of int, optional
+    :param thresholds: A dictionary of thresholds where the keys are criteria ('power', 'utilization', 'temperature')
+                       and the values are the corresponding thresholds. Devices exceeding these thresholds are excluded.
+    :type thresholds: dict, optional
+    :param sort_fn: A custom ranking function for sorting devices. 
+                     The function should take a device dictionary and return a numerical value.
+    :type sort_fn: callable, optional
+
+    :returns: If `n` is 1, returns a string representing the optimal CUDA device (e.g., 'cuda:0').
+              If `n` is greater than 1, returns a list of strings (e.g., ['cuda:0', 'cuda:1']).
+              If no suitable device is found, returns 'cpu' (or ['cpu'] if `n` > 1).
+    :rtype: str or list of str
+    :raises RuntimeError: If no suitable CUDA device is found and `fallback` is False on macOS.
+    :warn UserWarning: If no suitable CUDA device is found or if there are any warnings related to device availability.
+    
+    :note: 
+        This function uses the `nvidia-smi` command to query GPU information and relies on its output 
+        to gather data about memory, power usage, GPU utilization, and temperature.
         
-    n : int, optional, default=1
-        The number of devices to return. If n > 1, the top n devices based on the selection criterion or 
-        custom ranking function will be returned as a list.
-
-    fallback : bool, optional, default=True
-        Whether to fall back to the CPU if no suitable CUDA device is found. If False and no device is found, 
-        a RuntimeError will be raised.
-
-    exclude : list or set of int, optional, default=None
-        A list or set of GPU indices to exclude from selection. Excluded devices will not be considered for 
-        selection.
-
-    thresholds : dict, optional, default=None
-        A dictionary where keys are criteria ('power', 'utilization', or 'temperature') and values are the 
-        corresponding thresholds. If a device exceeds the threshold for any of these criteria, it will be excluded 
-        from selection.
-
-    sort_fn : callable, optional, default=None
-        A custom ranking function to use for sorting the devices. This function should take a dictionary (representing 
-        a device) and return a numerical value. Devices will be sorted in ascending order of this value. 
-        If not provided, the function will use the default sorting based on the selected criterion.
-
-    Returns:
-    --------
-    str or list of str
-        If `n` is 1, returns a string representing the optimal CUDA device in the form 'cuda:<index>'.
-        If `n` is greater than 1, returns a list of strings, each representing an optimal CUDA device 
-        (e.g., ['cuda:0', 'cuda:1']).
-        If no suitable device is found, returns 'cpu' (or ['cpu'] if `n` > 1).
-
-    Raises:
-    -------
-    RuntimeError
-        If no suitable CUDA device is found and `fallback` is set to False on macOS.
-
-    Warns:
-    ------
-    UserWarning
-        If no suitable CUDA device is found or if there are any warnings related to device availability.
-
-    Notes:
-    ------
-    - This function uses the `nvidia-smi` command to query GPU information and relies on its output to gather 
-      data about memory, power usage, GPU utilization, and temperature.
-    - On macOS, if MPS (Multi-Process Service) is available, the function will prioritize the MPS device. 
-      If MPS is not available and fallback is not enabled, it will raise an exception.
+        On macOS, if MPS (Multi-Process Service) is available, the function will prioritize the MPS device.
+        If MPS is not available and fallback is not enabled, it will raise an exception.
     """
     exclude = set(exclude) if exclude else set()
     thresholds = thresholds or {} 
