@@ -1,0 +1,10 @@
+Installation
+============
+
+To install the CUDA Selector package, run the following command:
+
+.. code-block:: bash
+
+   pip install cuda-selector
+
+Ensure that `nvidia-smi` is installed and accessible in your system's PATH for this package to function correctly.

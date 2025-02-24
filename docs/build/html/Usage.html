@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Usage &#8212; Cuda Selector 0.1.4 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=d1102ebc" />
+    <link rel="stylesheet" type="text/css" href="_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=27fed22d" />
+    <script src="_static/documentation_options.js?v=fd825880"></script>
+    <script src="_static/doctools.js?v=9bcbadda"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Installation" href="Installation.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="usage">
+<h1>Usage<a class="headerlink" href="#usage" title="Link to this heading">¶</a></h1>
+<p>The <cite>auto_cuda</cite> function selects the optimal CUDA device based on specified criteria such as memory, power, utilization, or temperature. It also allows custom ranking functions, exclusion of certain devices, application of thresholds, and fallback options for macOS.</p>
+<p><strong>Function Signature:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">auto_cuda</span><span class="p">(</span><span class="n">criteria</span><span class="o">=</span><span class="s1">&#39;memory&#39;</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">thresholds</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sort_fn</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Selects the optimal CUDA device based on specified criteria.&quot;&quot;&quot;</span>
+</pre></div>
+</div>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><p><strong>criteria</strong> (<em>str</em>, optional): The primary selection criterion for the optimal device. Options:</p>
+<ul class="simple">
+<li><p><cite>‘memory’</cite>: Selects the device with the most free memory.</p></li>
+<li><p><cite>‘power’</cite>: Selects the device with the lowest power draw.</p></li>
+<li><p><cite>‘utilization’</cite>: Selects the device with the lowest GPU utilization.</p></li>
+<li><p><cite>‘temperature’</cite>: Selects the device with the lowest temperature.</p></li>
+</ul>
+<p>Default is <cite>‘memory’</cite>.</p>
+</li>
+<li><p><strong>n</strong> (<em>int</em>, optional): The number of devices to return. If <cite>n &gt; 1</cite>, the top <cite>n</cite> devices will be returned as a list. Default is <cite>1</cite>.</p></li>
+<li><p><strong>fallback</strong> (<em>bool</em>, optional): Whether to fall back to the CPU if no suitable CUDA device is found. If <cite>False</cite> and no device is found, a <cite>RuntimeError</cite> is raised. Default is <cite>True</cite>.</p></li>
+<li><p><strong>exclude</strong> (<em>list or set of int</em>, optional): A list or set of GPU indices to exclude from selection.</p></li>
+<li><p><strong>thresholds</strong> (<em>dict</em>, optional): A dictionary where keys are criteria (<cite>‘power’</cite>, <cite>‘utilization’</cite>, <cite>‘temperature’</cite>) and values are the corresponding thresholds. If a device exceeds the threshold, it is excluded.</p></li>
+<li><p><strong>sort_fn</strong> (<em>callable</em>, optional): A custom ranking function for sorting devices. It should take a device dictionary and return a numerical value. Devices will be sorted in ascending order of this value. If not provided, the function defaults to the selected criterion.</p></li>
+</ul>
+<p><strong>Returns:</strong></p>
+<ul class="simple">
+<li><p>If <cite>n == 1</cite>, returns a string representing the optimal CUDA device (e.g., <cite>‘cuda:0’</cite>).</p></li>
+<li><p>If <cite>n &gt; 1</cite>, returns a list of strings (e.g., <cite>[‘cuda:0’, ‘cuda:1’]</cite>).</p></li>
+<li><p>If no suitable device is found, returns <cite>‘cpu’</cite> (or <cite>[‘cpu’]</cite> if <cite>n &gt; 1</cite>).</p></li>
+</ul>
+<p><strong>Raises:</strong></p>
+<ul class="simple">
+<li><p><strong>RuntimeError</strong>: If no suitable CUDA device is found and <cite>fallback</cite> is <cite>False</cite> on macOS.</p></li>
+<li><p><strong>UserWarning</strong>: If no suitable CUDA device is found or if there are warnings about device availability.</p></li>
+</ul>
+<p><strong>Notes:</strong></p>
+<ul class="simple">
+<li><p>This function uses the <cite>nvidia-smi</cite> command to query GPU information and relies on its output.</p></li>
+<li><p>On macOS, if Multi-Process Service (MPS) is available, the function prioritizes the MPS device. If MPS is unavailable and fallback is <cite>False</cite>, an exception is raised.</p></li>
+</ul>
+<p><strong>Example Usage:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">cuda_selector</span> <span class="kn">import</span> <span class="n">auto_cuda</span>
+
+<span class="c1"># Select the CUDA device with the most free memory</span>
+<span class="n">device</span> <span class="o">=</span> <span class="n">auto_cuda</span><span class="p">()</span>
+
+<span class="c1"># Select the CUDA device with the lowest power usage</span>
+<span class="n">device</span> <span class="o">=</span> <span class="n">auto_cuda</span><span class="p">(</span><span class="n">criteria</span><span class="o">=</span><span class="s1">&#39;power&#39;</span><span class="p">)</span>
+
+<span class="c1"># Select the CUDA device with the lowest utilization</span>
+<span class="n">device</span> <span class="o">=</span> <span class="n">auto_cuda</span><span class="p">(</span><span class="n">criteria</span><span class="o">=</span><span class="s1">&#39;utilization&#39;</span><span class="p">)</span>
+
+<span class="c1"># Select multiple devices (top 3) based on memory, with a custom sorting function</span>
+<span class="n">device_list</span> <span class="o">=</span> <span class="n">auto_cuda</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">sort_fn</span><span class="o">=</span><span class="k">lambda</span> <span class="n">d</span><span class="p">:</span> <span class="n">d</span><span class="p">[</span><span class="s1">&#39;mem&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="mf">0.7</span> <span class="o">+</span> <span class="n">d</span><span class="p">[</span><span class="s1">&#39;util&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="mf">0.3</span><span class="p">)</span>
+
+<span class="c1"># Exclude a specific device (e.g., device 0) from selection</span>
+<span class="n">device</span> <span class="o">=</span> <span class="n">auto_cuda</span><span class="p">(</span><span class="n">exclude</span><span class="o">=</span><span class="p">{</span><span class="mi">0</span><span class="p">})</span>
+
+<span class="c1"># Apply thresholds for power and utilization</span>
+<span class="n">device</span> <span class="o">=</span> <span class="n">auto_cuda</span><span class="p">(</span><span class="n">thresholds</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;power&#39;</span><span class="p">:</span> <span class="mi">150</span><span class="p">,</span> <span class="s1">&#39;utilization&#39;</span><span class="p">:</span> <span class="mi">50</span><span class="p">})</span>
+</pre></div>
+</div>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">Cuda Selector</a></h1>
+
+
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="Installation.html">Installation</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Usage</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="Installation.html" title="previous chapter">Installation</a></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2025, Samer Makni.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 8.2.1</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+      |
+      <a href="_sources/Usage.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

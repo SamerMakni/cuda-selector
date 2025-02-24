@@ -1,0 +1,73 @@
+
+Usage
+=====
+
+The `auto_cuda` function selects the optimal CUDA device based on specified criteria such as memory, power, utilization, or temperature. It also allows custom ranking functions, exclusion of certain devices, application of thresholds, and fallback options for macOS.
+
+**Function Signature:**
+
+.. code-block:: python
+
+   def auto_cuda(criteria='memory', n=1, fallback=True, exclude=None, thresholds=None, sort_fn=None):
+       """Selects the optimal CUDA device based on specified criteria."""
+
+**Parameters:**
+
+- **criteria** (*str*, optional): The primary selection criterion for the optimal device. Options:
+  
+  - `'memory'`: Selects the device with the most free memory.
+  - `'power'`: Selects the device with the lowest power draw.
+  - `'utilization'`: Selects the device with the lowest GPU utilization.
+  - `'temperature'`: Selects the device with the lowest temperature.
+
+  Default is `'memory'`.
+
+- **n** (*int*, optional): The number of devices to return. If `n > 1`, the top `n` devices will be returned as a list. Default is `1`.
+
+- **fallback** (*bool*, optional): Whether to fall back to the CPU if no suitable CUDA device is found. If `False` and no device is found, a `RuntimeError` is raised. Default is `True`.
+
+- **exclude** (*list or set of int*, optional): A list or set of GPU indices to exclude from selection.
+
+- **thresholds** (*dict*, optional): A dictionary where keys are criteria (`'power'`, `'utilization'`, `'temperature'`) and values are the corresponding thresholds. If a device exceeds the threshold, it is excluded.
+
+- **sort_fn** (*callable*, optional): A custom ranking function for sorting devices. It should take a device dictionary and return a numerical value. Devices will be sorted in ascending order of this value. If not provided, the function defaults to the selected criterion.
+
+**Returns:**
+
+- If `n == 1`, returns a string representing the optimal CUDA device (e.g., `'cuda:0'`).
+- If `n > 1`, returns a list of strings (e.g., `['cuda:0', 'cuda:1']`).
+- If no suitable device is found, returns `'cpu'` (or `['cpu']` if `n > 1`).
+
+**Raises:**
+
+- **RuntimeError**: If no suitable CUDA device is found and `fallback` is `False` on macOS.
+- **UserWarning**: If no suitable CUDA device is found or if there are warnings about device availability.
+
+**Notes:**
+
+- This function uses the `nvidia-smi` command to query GPU information and relies on its output.
+- On macOS, if Multi-Process Service (MPS) is available, the function prioritizes the MPS device. If MPS is unavailable and fallback is `False`, an exception is raised.
+
+**Example Usage:**
+
+.. code-block:: python
+
+   from cuda_selector import auto_cuda
+
+   # Select the CUDA device with the most free memory
+   device = auto_cuda()
+
+   # Select the CUDA device with the lowest power usage
+   device = auto_cuda(criteria='power')
+
+   # Select the CUDA device with the lowest utilization
+   device = auto_cuda(criteria='utilization')
+
+   # Select multiple devices (top 3) based on memory, with a custom sorting function
+   device_list = auto_cuda(n=3, sort_fn=lambda d: d['mem'] * 0.7 + d['util'] * 0.3)
+
+   # Exclude a specific device (e.g., device 0) from selection
+   device = auto_cuda(exclude={0})
+
+   # Apply thresholds for power and utilization
+   device = auto_cuda(thresholds={'power': 150, 'utilization': 50})
