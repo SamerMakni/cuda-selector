@@ -1,7 +1,6 @@
 # Auto Cuda Selector
 
-A simple tool to select the optimal CUDA device based on memory, power, or utilization.
-
+A simple tool to select the optimal CUDA device based on memory, power, temperature, or utilization. It supports fallback to CPU and custom sorting functions. Supports CUDA devices on Linux and MPS devices on macOS. Full documentation be found [here](https://samermakni.github.io/cuda-selector/)
 
 ### Install
 ```bash
@@ -35,3 +34,4 @@ devices = auto_cuda(thresholds={'power': 150, 'utilization': 70})
 # Use a custom ranking function for selecting devices
 devices = auto_cuda(sort_fn=lambda d: d['memory_free'] * 0.7 + d['utilization'] * 0.3)
 ```
+
