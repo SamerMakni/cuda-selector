@@ -1,3 +1,8 @@
+![PyPI - Version](https://img.shields.io/pypi/v/cuda_selector)
+![PyPI - License](https://img.shields.io/pypi/l/cuda_selector)
+![PyPI - Python Version](https://img.shields.io/pypi/pyversions/cuda_selector)
+![PyPI - Downloads](https://img.shields.io/pypi/dm/cuda_selector)
+
 # Auto Cuda Selector
 
 A simple tool to select the optimal CUDA device based on memory, power, temperature, or utilization. It supports fallback to CPU and custom sorting functions. Supports CUDA devices on Linux and MPS devices on macOS. Full documentation be found [here](https://samermakni.github.io/cuda-selector/)
