@@ -18,8 +18,7 @@ MOCK_NVIDIA_SMI_OUTPUT = (
 class TestAutoCuda(unittest.TestCase):
     @patch('cuda_selector.subprocess.run')
     @patch('cuda_selector.platform.system', return_value='Linux')  # Mock to simulate Linux
-    @patch('cuda_selector.is_mps_available', return_value=False)  # Mock to disable MPS
-    def setUp(self, mock_mps, mock_platform, mock_subprocess):
+    def setUp(self, mock_platform, mock_subprocess):
         mock_subprocess.return_value.stdout = MOCK_NVIDIA_SMI_OUTPUT
         self.mock_subprocess = mock_subprocess
 
