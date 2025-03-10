@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import patch
 import warnings
-from cuda_selector import auto_cuda 
+from cuda_selector import auto_cuda, is_mps_available  
 
 # Mocked nvidia-smi output
 MOCK_NVIDIA_SMI_OUTPUT = (
@@ -16,9 +16,10 @@ MOCK_NVIDIA_SMI_OUTPUT = (
 )
 
 class TestAutoCuda(unittest.TestCase):
-    @patch('cuda_selector.subprocess.run')
-    @patch('cuda_selector.platform.system', return_value='Linux')  # Mock to simulate Linux
-    def setUp(self, mock_platform, mock_subprocess):
+    @patch('subprocess.run')  
+    @patch('platform.system', return_value='Linux')  
+    @patch('cuda_selector.is_mps_available', return_value=False) 
+    def setUp(self, mock_mps, mock_platform, mock_subprocess):
         mock_subprocess.return_value.stdout = MOCK_NVIDIA_SMI_OUTPUT
         self.mock_subprocess = mock_subprocess
 
@@ -47,18 +48,16 @@ class TestAutoCuda(unittest.TestCase):
         self.assertEqual(result, "cuda:7")
 
     def test_thresholds(self):
-
         result = auto_cuda(thresholds={'power': 150, 'utilization': 70})
         self.assertEqual(result, "cuda:3")
 
     def test_custom_sort_fn(self):
-
         result = auto_cuda(sort_fn=lambda d: d['memory_free'] * 0.7 + d['utilization'] * 0.3)
         self.assertEqual(result, "cuda:3")
 
     def test_no_devices_after_filter(self):
         with warnings.catch_warnings(record=True) as w:
-            result = auto_cuda(thresholds={'memory_free': 50000}) 
+            result = auto_cuda(thresholds={'memory_free': 50000})  # No device has > 50000 MB free
             self.assertEqual(result, "cpu")
             self.assertTrue(any("No suitable CUDA devices found" in str(warn.message) for warn in w))
 
