@@ -9,12 +9,9 @@ def is_mps_available():
     """
     if platform.system() != 'Darwin':
         return False 
-
     metal = ctypes.cdll.LoadLibrary('/System/Library/Frameworks/Metal.framework/Metal')
-
     metal.MTLCreateSystemDefaultDevice.restype = ctypes.c_void_p
     mps_device = metal.MTLCreateSystemDefaultDevice()
-
     return mps_device != 0
 
 def auto_cuda(criteria='memory', n=1, fallback=True, exclude=None, thresholds=None, sort_fn=None):
@@ -68,7 +65,6 @@ def auto_cuda(criteria='memory', n=1, fallback=True, exclude=None, thresholds=No
             warnings.warn("No MPS device available on macOS. Using CPU instead.")
             return "cpu"
     try:
-
         result = subprocess.run(
             ['nvidia-smi', '--query-gpu=memory.free,memory.total,power.draw,utilization.gpu,temperature.gpu,index',
              '--format=csv,noheader,nounits'],
@@ -82,14 +78,13 @@ def auto_cuda(criteria='memory', n=1, fallback=True, exclude=None, thresholds=No
         for line in lines:
             values = [value.strip() for value in line.split(',')]
             
-            memory_free = int(values[0])  # Memory free
-            memory_total = int(values[1])  # Total memory
-            power_draw = float(values[2])  # Power draw
-            utilization = float(values[3].rstrip('%'))  # Utilization percentage
-            temperature = float(values[4])  # GPU temperature
-            index = int(values[5])  # GPU index
+            memory_free = int(values[0])
+            memory_total = int(values[1])
+            power_draw = float(values[2])
+            utilization = float(values[3].rstrip('%'))
+            temperature = float(values[4])
+            index = int(values[5])
             
-            # Skip excluded GPUs
             if index in exclude:
                 continue
             
@@ -104,10 +99,13 @@ def auto_cuda(criteria='memory', n=1, fallback=True, exclude=None, thresholds=No
                 'index': index
             }
 
-            if any(
-                key in thresholds and device[key] > thresholds[key] if key in ['power', 'utilization', 'temperature']
-                else key in thresholds and device[key] < thresholds[key] for key in thresholds
-            ):
+            exclude_device = any(
+                (key == 'power' and device['power_draw'] > thresholds[key]) or
+                (key in ['utilization', 'temperature'] and device[key] > thresholds[key]) or
+                (key not in ['power', 'utilization', 'temperature'] and device[key] < thresholds[key])
+                for key in thresholds
+            )
+            if exclude_device:
                 continue
 
             devices.append(device)
@@ -117,14 +115,16 @@ def auto_cuda(criteria='memory', n=1, fallback=True, exclude=None, thresholds=No
             return "cpu" if n == 1 else ["cpu"]
 
         default_sort_key = {
-            'memory': lambda x: -x['memory_free'],  # More free memory is better
-            'power': lambda x: x['power_draw'],  # Lower power draw is better
-            'utilization': lambda x: x['utilization'],  # Lower utilization is better
-            'temperature': lambda x: x['temperature'],  # Lower temperature is better
+            'memory': lambda x: (-x['memory_free'], x['index']),  # Descending memory, then index
+            'power': lambda x: (x['power_draw'], -x['memory_free']),  # Ascending power, then descending memory
+            'utilization': lambda x: (x['utilization'], -x['memory_free']),  # Ascending utilization, then memory
+            'temperature': lambda x: (x['temperature'], -x['memory_free']),  # Ascending temp, then memory
         }.get(criteria)
 
-        devices.sort(key=sort_fn if sort_fn else default_sort_key)
-
+        if sort_fn:
+            devices.sort(key=sort_fn, reverse=True) 
+        else:
+            devices.sort(key=default_sort_key)
         sorted_devices = devices[:n]
 
         return [f'cuda:{d["index"]}' for d in sorted_devices] if n > 1 else f'cuda:{sorted_devices[0]["index"]}'

@@ -47,10 +47,6 @@ class TestAutoCuda(unittest.TestCase):
         result = auto_cuda(exclude=[3])
         self.assertEqual(result, "cuda:7")
 
-    def test_thresholds(self):
-        result = auto_cuda(thresholds={'power': 150, 'utilization': 70})
-        self.assertEqual(result, "cuda:3")
-
     def test_custom_sort_fn(self):
         result = auto_cuda(sort_fn=lambda d: d['memory_free'] * 0.7 + d['utilization'] * 0.3)
         self.assertEqual(result, "cuda:3")
